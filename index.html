@@ -1442,10 +1442,39 @@
 }
 
 /* Mobile adjustments */
+/* ===== FAB AI — تجنّب التداخل مع شريط التشغيل ===== */
+/* عندما يكون شريط التشغيل ظاهراً نرفع زر الـ AI فوقه */
+body.player-active .fab-ai-container {
+  bottom: 96px !important;
+}
+body.player-active .fab-chat-window {
+  max-height: calc(100vh - 180px);
+}
+
+@media (max-width: 768px) {
+  .fab-ai-container { bottom: 14px !important; left: 12px !important; right: auto !important; top: auto !important; align-items: flex-end; gap: 10px; }
+  .fab-ai-btn { width: 50px; height: 50px; }
+  .fab-icon svg { width: 22px; height: 22px; }
+  .fab-chat-window { width: calc(100vw - 24px); max-width: 340px; max-height: 70vh; }
+  body.player-active .fab-ai-container { bottom: 148px !important; }
+  body.player-active .fab-chat-window { max-height: calc(100vh - 220px); }
+}
+
 @media (max-width: 480px) {
-  .fab-ai-container { bottom: 16px !important; left: 16px !important; right: auto !important; top: auto !important; align-items: flex-end; transition: bottom 0.3s ease; }
-  body.audio-active .fab-ai-container { bottom: 90px !important; }
-  .fab-chat-window { width: 290px; }
+  .fab-ai-btn { width: 46px; height: 46px; }
+  .fab-icon svg { width: 20px; height: 20px; }
+  .fab-chat-window { width: calc(100vw - 20px); }
+  body.player-active .fab-ai-container { bottom: 148px !important; }
+}
+
+/* Extra safety: use :has() for browsers that support it */
+@media (max-width: 720px) {
+  body:has(.audio-player.visible) .fab-ai-container { bottom: 148px !important; }
+  body:has(.audio-player.visible) .fab-chat-window { max-height: calc(100vh - 220px); }
+}
+
+@media (min-width: 721px) {
+  body:has(.audio-player.visible) .fab-ai-container { bottom: 104px !important; }
 }
 </style>
 
