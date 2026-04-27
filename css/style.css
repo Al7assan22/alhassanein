@@ -336,12 +336,14 @@ nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
   backdrop-filter: blur(4px);
   z-index: 1001;
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   transition: opacity 0.3s ease;
   cursor: pointer;
   touch-action: auto;
   -webkit-tap-highlight-color: transparent;
 }
-.sidebar-overlay.active { display: block; opacity: 1; }
+.sidebar-overlay.active { display: block; opacity: 1; visibility: visible; pointer-events: auto; }
 
 @media (max-width: 900px) {
   .hamburger-btn { display: flex; }
@@ -599,8 +601,17 @@ main { flex: 1; padding: 24px 20px; max-width: 1200px; margin: 0 auto; width: 10
   background: rgba(0,0,0,0.55);
   z-index: 350;
   backdrop-filter: blur(2px);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease;
 }
-.surah-sidebar-overlay.active { display: block; }
+.surah-sidebar-overlay.active {
+  display: block;
+  pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+}
 
 .surah-sidebar {
   background: var(--bg-card);
