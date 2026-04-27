@@ -76,7 +76,6 @@
     <button class="nav-btn" onclick="showScreen('azkar')" id="nav-azkar"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="4"/><path d="M12 4v2M4.9 7.1l1.4 1.4M19.1 7.1l-1.4 1.4M3 17h18"/></svg><span>أذكار الصباح والمساء</span></button>
     <button class="nav-btn" onclick="showScreen('quran-duas')" id="nav-quran-duas"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a2 2 0 0 1 4 0v3"/><path d="M17 11V7a2 2 0 0 0-4 0v3"/><path d="M5 11h14v4a6 6 0 0 1-12 0z"/></svg><span>أدعية القرآن</span></button>
     <button class="nav-btn" onclick="showScreen('tasbih')" id="nav-tasbih"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="1.5"/><circle cx="20" cy="12" r="1.5"/><circle cx="12" cy="20" r="1.5"/><circle cx="4" cy="12" r="1.5"/></svg><span>سبحة</span></button>
-    <button class="nav-btn" onclick="showScreen('ai')" id="nav-ai"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="3"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><path d="M12 3v3M8 18l-1 2M16 18l1 2"/></svg><span>AI</span></button>
     </div>
     <button class="nav-scroll-arrow nav-scroll-right" id="nav-scroll-right" onclick="scrollNav(1)" aria-label="يمين">&#8250;</button>
   <div class="sidebar-footer-credit">
@@ -1000,6 +999,507 @@
       </div>
     </div>
   </div>
+
+
+
+<!-- ===== FLOATING AI CHAT ===== -->
+<div class="fab-ai-container" id="fab-ai-container">
+  <!-- Chat Window -->
+  <div class="fab-chat-window" id="fab-chat-window">
+    <div class="fab-chat-header">
+      <div class="fab-chat-header-left">
+        <div class="fab-chat-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="3"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><path d="M12 3v3M8 18l-1 2M16 18l1 2"/></svg>
+        </div>
+        <div>
+          <div class="fab-chat-title">المساعد القرآني الذكي</div>
+          <div class="fab-chat-status"><span class="fab-status-dot"></span>متصل الآن</div>
+        </div>
+      </div>
+      <button class="fab-chat-close" onclick="toggleFabChat()" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="fab-chat-messages" id="fab-chat-messages">
+      <div class="fab-msg bot">
+        <div class="fab-msg-avatar bot">☾</div>
+        <div class="fab-msg-bubble">
+          السلام عليكم 🌙<br>
+          أنا مساعدك القرآني. اسألني عن أي آية أو موضوع في القرآن الكريم.
+        </div>
+      </div>
+    </div>
+
+    <div class="fab-chat-suggestions" id="fab-suggestions">
+      <button class="fab-sug" onclick="fabAskAI('ما فضل سورة الإخلاص؟')">فضل سورة الإخلاص</button>
+      <button class="fab-sug" onclick="fabAskAI('ما معنى آية الكرسي؟')">معنى آية الكرسي</button>
+      <button class="fab-sug" onclick="fabAskAI('آيات عن الصبر')">آيات عن الصبر</button>
+    </div>
+
+    <div class="fab-chat-input-row">
+      <input type="text" id="fab-ai-input" placeholder="اكتب سؤالك..." onkeydown="if(event.key==='Enter')fabSendAI()" />
+      <button class="fab-send-btn" onclick="fabSendAI()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Button -->
+  <button class="fab-ai-btn" id="fab-ai-btn" onclick="toggleFabChat()" aria-label="فتح المساعد الذكي">
+    <div class="fab-icon fab-icon-open">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="3"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><path d="M12 3v3M8 18l-1 2M16 18l1 2"/></svg>
+    </div>
+    <div class="fab-icon fab-icon-close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </div>
+    <div class="fab-pulse"></div>
+  </button>
+</div>
+
+<style>
+/* side-ai-tab removed */
+
+/* ===== FAB AI FLOATING BUTTON ===== */
+.fab-ai-container {
+  position: fixed;
+  bottom: 16px !important;
+  left: 16px !important;
+  right: auto !important;
+  top: auto !important;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+/* Floating Button */
+.fab-ai-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #B6923A;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(182, 146, 58, 0.6), 0 0 0 0 rgba(182, 146, 58, 0.4);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  position: relative;
+  overflow: visible;
+  animation: fabBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes fabBounceIn {
+  0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.fab-ai-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 28px rgba(182, 146, 58, 0.8), 0 0 0 0 rgba(182, 146, 58, 0.4);
+}
+
+.fab-ai-btn:active {
+  transform: scale(0.95);
+}
+
+.fab-ai-btn.is-open {
+  background: #8f7028;
+}
+
+.fab-icon {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  color: #fff;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.fab-icon-close {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+}
+
+.fab-ai-btn.is-open .fab-icon-open {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.5);
+}
+
+.fab-ai-btn.is-open .fab-icon-close {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+/* Pulse animation */
+.fab-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(182, 146, 58, 0.35);
+  animation: fabPulse 2.5s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes fabPulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  70% { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+.fab-ai-btn.is-open .fab-pulse {
+  animation: none;
+  opacity: 0;
+}
+
+/* Chat Window */
+.fab-chat-window {
+  width: 320px;
+  background: var(--bg-card, #141e35);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,201,122,0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.85) translateY(20px);
+  transform-origin: bottom left;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+  max-height: 480px;
+}
+
+.fab-chat-window.is-open {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Header */
+.fab-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(201,168,76,0.25) 0%, rgba(232,201,122,0.15) 100%);
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  flex-shrink: 0;
+}
+
+.fab-chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fab-chat-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #c9a84c, #e8c97a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fab-chat-avatar svg {
+  width: 20px;
+  height: 20px;
+  color: #fff;
+}
+
+.fab-chat-title {
+  font-family: 'Cairo', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary, #e8e4d8);
+  direction: rtl;
+}
+
+.fab-chat-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 11px;
+  color: var(--text-muted, #8899aa);
+  direction: rtl;
+}
+
+.fab-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.fab-chat-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.07);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #8899aa);
+  transition: background 0.2s, color 0.2s;
+}
+
+.fab-chat-close:hover {
+  background: rgba(255,255,255,0.13);
+  color: var(--text-primary, #e8e4d8);
+}
+
+.fab-chat-close svg { width: 15px; height: 15px; }
+
+/* Messages */
+.fab-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 200px;
+  max-height: 240px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.3) transparent;
+}
+
+.fab-chat-messages::-webkit-scrollbar { width: 3px; }
+.fab-chat-messages::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.4); border-radius: 2px; }
+
+.fab-msg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  animation: fabMsgIn 0.3s ease both;
+}
+
+@keyframes fabMsgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fab-msg.user { flex-direction: row-reverse; }
+
+.fab-msg-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.fab-msg-avatar.bot { background: linear-gradient(135deg, var(--gold, #c9a84c), var(--gold-light, #e8c97a)); }
+.fab-msg-avatar.user-av { background: linear-gradient(135deg, #c9a84c, #e8c97a); color: white; }
+
+.fab-msg-bubble {
+  background: var(--bg-secondary, #1a2540);
+  border: 1px solid var(--border, #1e2d4a);
+  border-radius: 12px 12px 12px 4px;
+  padding: 9px 12px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-primary, #e8e4d8);
+  max-width: 78%;
+  direction: rtl;
+  text-align: right;
+}
+
+.fab-msg.user .fab-msg-bubble {
+  background: rgba(201,168,76,0.15);
+  border-color: rgba(201,168,76,0.35);
+  border-radius: 12px 12px 4px 12px;
+}
+
+/* Suggestions */
+.fab-chat-suggestions {
+  padding: 6px 12px 10px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.fab-sug {
+  background: rgba(201,168,76,0.12);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 20px;
+  padding: 5px 11px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 11px;
+  color: var(--text-primary, #e8e4d8);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  direction: rtl;
+  white-space: nowrap;
+}
+
+.fab-sug:hover {
+  background: rgba(201,168,76,0.25);
+  border-color: rgba(201,168,76,0.6);
+  transform: scale(1.03);
+}
+
+/* Input Row */
+.fab-chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 14px;
+  border-top: 1px solid rgba(201,168,76,0.15);
+  flex-shrink: 0;
+}
+
+.fab-chat-input-row input {
+  flex: 1;
+  background: var(--bg-secondary, #1a2540);
+  border: 1px solid var(--border, #1e2d4a);
+  color: var(--text-primary, #e8e4d8);
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 12.5px;
+  direction: rtl;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.fab-chat-input-row input:focus {
+  border-color: rgba(201,168,76,0.6);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+}
+
+.fab-chat-input-row input::placeholder {
+  color: var(--text-muted, #8899aa);
+}
+
+.fab-send-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #c9a84c, #e8c97a);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 10px rgba(201,168,76,0.4);
+}
+
+.fab-send-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(201,168,76,0.6);
+}
+
+.fab-send-btn:active { transform: scale(0.94); }
+.fab-send-btn svg { width: 16px; height: 16px; }
+
+/* Typing indicator */
+.fab-typing {
+  display: flex;
+  gap: 4px;
+  padding: 6px 4px;
+  align-items: center;
+}
+.fab-typing span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(201,168,76,0.7);
+  animation: fabTyping 1.2s ease-in-out infinite;
+}
+.fab-typing span:nth-child(2) { animation-delay: 0.2s; }
+.fab-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes fabTyping {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .fab-ai-container { bottom: 16px !important; left: 16px !important; right: auto !important; top: auto !important; align-items: flex-end; }
+  .fab-chat-window { width: 290px; }
+}
+</style>
+
+<script>
+// ===== FAB AI CHAT =====
+let fabChatOpen = false;
+
+function toggleFabChat() {
+  fabChatOpen = !fabChatOpen;
+  const btn = document.getElementById('fab-ai-btn');
+  const win = document.getElementById('fab-chat-window');
+  btn.classList.toggle('is-open', fabChatOpen);
+  win.classList.toggle('is-open', fabChatOpen);
+  if (fabChatOpen) {
+    setTimeout(() => document.getElementById('fab-ai-input')?.focus(), 350);
+  }
+}
+
+async function fabSendAI() {
+  const input = document.getElementById('fab-ai-input');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  fabAskAI(q);
+}
+
+async function fabAskAI(question) {
+  const msgs = document.getElementById('fab-chat-messages');
+  // Hide suggestions after first question
+  const suggs = document.getElementById('fab-suggestions');
+  if (suggs) suggs.style.display = 'none';
+
+  // User message
+  msgs.innerHTML += `<div class="fab-msg user"><div class="fab-msg-avatar user-av">👤</div><div class="fab-msg-bubble">${question}</div></div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Typing indicator
+  const typId = 'fab-typ-' + Date.now();
+  msgs.innerHTML += `<div class="fab-msg" id="${typId}"><div class="fab-msg-avatar bot">☾</div><div class="fab-msg-bubble"><div class="fab-typing"><span></span><span></span><span></span></div></div></div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const res = await fetch('/.netlify/functions/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question })
+    });
+    const data = await res.json();
+    document.getElementById(typId)?.remove();
+    const answer = (res.ok && data?.answer) ? data.answer : buildLocalAIAnswer(question);
+    msgs.innerHTML += `<div class="fab-msg"><div class="fab-msg-avatar bot">☾</div><div class="fab-msg-bubble">${answer.replace(/\n/g,'<br>')}</div></div>`;
+  } catch (e) {
+    document.getElementById(typId)?.remove();
+    const answer = buildLocalAIAnswer(question);
+    msgs.innerHTML += `<div class="fab-msg"><div class="fab-msg-avatar bot">☾</div><div class="fab-msg-bubble">${answer}</div></div>`;
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+</script>
 
 </body>
 </html>
