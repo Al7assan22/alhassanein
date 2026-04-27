@@ -1,3 +1,30 @@
+// ===== SAFETY: إغلاق أي overlay عالق عند تحميل الصفحة =====
+(function() {
+  function closeAllOverlays() {
+    ['sidebar-overlay','surah-sidebar-overlay','mshf-overlay'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) { el.classList.remove('active'); el.classList.remove('show'); }
+    });
+    var sb = document.getElementById('surah-sidebar');
+    if (sb) sb.classList.remove('open');
+    var msb = document.getElementById('main-sidebar');
+    if (msb) msb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', closeAllOverlays);
+  } else {
+    closeAllOverlays();
+  }
+  window.__closeAllOverlays = closeAllOverlays;
+  // Hook on showScreen ليقفل أي overlay عند تنقل المستخدم
+  var origShow = window.showScreen;
+  window.showScreen = function(name) {
+    closeAllOverlays();
+    if (typeof origShow === 'function') origShow(name);
+  };
+})();
+
 // ===== SPLASH SCREEN =====
 (function initSplash() {
   // Draw twinkling stars on canvas
@@ -607,6 +634,7 @@ function changeReciterBar(val) {
 
 function showPlayer(surahNum, verseNum) {
   document.getElementById('audio-player').classList.add('visible');
+  document.body.classList.add('player-active');
   const surahName = (allSurahs.find(s => s.number === surahNum)?.name_arabic) || state.currentSurah?.name_arabic || `سورة ${surahNum}`;
   document.getElementById('audio-surah-name').textContent = surahName;
   document.getElementById('audio-verse-info').textContent = `الآية ${toArabicDigits(verseNum)} — ${RECITER_NAMES[state.currentReciter] || state.currentReciter}`;
@@ -621,6 +649,7 @@ function closePlayer() {
   state.playing = false;
   state.nowPlaying = { surah: null, verse: null, context: null };
   document.getElementById('audio-player').classList.remove('visible');
+  document.body.classList.remove('player-active');
   document.querySelectorAll('.mushaf-ayah.playing, .verse-block.playing').forEach(el => el.classList.remove('playing'));
 }
 
@@ -2686,6 +2715,7 @@ function listenPlaySurah(surahNum){
   audio.src = url;
   audio.playbackRate = parseFloat(document.querySelector('.audio-controls .speed-select')?.value || '1');
   document.getElementById('audio-player').classList.add('visible');
+  document.body.classList.add('player-active');
   document.getElementById('audio-surah-name').textContent = surah.name_arabic || surah.name;
   document.getElementById('audio-verse-info').textContent = `سورة كاملة — ${RECITER_NAMES[LISTEN_STATE.reciter]||''}`;
   audio.play().then(()=>{
