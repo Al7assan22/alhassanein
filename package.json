@@ -1,0 +1,8 @@
+{
+  "name": "alhasanain-quran-platform",
+  "version": "1.0.0",
+  "description": "منصة الحَسَنَيْن للقرآن الكريم",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
