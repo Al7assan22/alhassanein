@@ -25,12 +25,10 @@ exports.handler = async (event) => {
 - تُبسّط المعلومة دون إخلال بدقتها
 - تُعبّر عن الفرح حين يُسأل عن القرآن والإسلام
 قواعد الإجابة:
-- أجب مباشرةً ومختصراً — لا تُطوّل إلا إذا طُلب منك
-- التفسير: جملتان أو ثلاث تكفي، مع ذكر المرجع باختصار
-- لا تطلب إعادة الصياغة — افهم القصد وأجب
+- أجب مباشرةً ومختصراً
+- التفسير: جملتان أو ثلاث تكفي مع ذكر المرجع
 - إذا سُئلت "من أنت" عرّف بنفسك وبالمهندس الحسن حجاج
 - أجب بالعربية الفصحى المبسطة
-- اذكر الآيات والأحاديث مع مراجعها عند الحاجة فقط
 - يمكنك الإجابة في: التفسير، الفقه، الأخلاق، السيرة النبوية`;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -51,10 +49,7 @@ exports.handler = async (event) => {
     });
 
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data?.error?.message || `Groq API error ${response.status}`);
-    }
+    if (!response.ok) throw new Error(data?.error?.message || `Groq error ${response.status}`);
 
     const answer = data?.choices?.[0]?.message?.content || 'عذراً، تعذّر الحصول على إجابة.';
     return { statusCode: 200, headers, body: JSON.stringify({ answer }) };
