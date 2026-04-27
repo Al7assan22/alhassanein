@@ -51,9 +51,14 @@ exports.handler = async (event) => {
 - اذكر الآيات والأحاديث مع مراجعها عند الحاجة فقط
 - يمكنك الإجابة في: التفسير، الفقه، الأخلاق، السيرة النبوية`;
 
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash-lite'];
+    // 3 موديلات — بيجرب الأول، لو فشل يروح للتاني، وهكذا
+    const models = [
+      'gemini-2.0-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash-latest'
+    ];
 
-    async function callGemini(model, retries = 3) {
+    async function callGemini(model, retries = 2) {
       for (let i = 0; i < retries; i++) {
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
@@ -68,11 +73,14 @@ exports.handler = async (event) => {
           }
         );
         const data = await res.json();
-        if (res.status === 503) {
-          console.warn(`503 on ${model}, attempt ${i + 1}`);
+
+        // لو 503 أو 429 جرب تاني بعد ثانية
+        if (res.status === 503 || res.status === 429) {
+          console.warn(`${res.status} on ${model}, attempt ${i + 1}`);
           if (i < retries - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
           continue;
         }
+
         return { res, data };
       }
       return null;
@@ -80,9 +88,11 @@ exports.handler = async (event) => {
 
     let result = null;
     for (const model of models) {
+      console.log(`Trying model: ${model}`);
       result = await callGemini(model);
-      if (result) break;
+      if (result && result.res.ok) break;
       console.warn(`Model ${model} failed, trying next...`);
+      result = null;
     }
 
     if (!result) {
