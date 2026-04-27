@@ -348,44 +348,23 @@
 
     setLoading("forgot-submit-btn", true);
 
-    // Use Netlify function to check email via Firebase Admin SDK (100% accurate)
-    fetch('/.netlify/functions/check-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (!data.exists) {
-        showError("forgot-error", "❌ هذا البريد الإلكتروني غير مسجل في المنصة.");
-        setLoading("forgot-submit-btn", false);
-        return;
-      }
-      // Email exists → send reset
-      return auth.sendPasswordResetEmail(email)
-        .then(function() {
-          showSuccess("forgot-success",
-            "✅ إذا كان البريد مسجلاً، سيصلك رابط إعادة التعيين.\n" +
-            "تحقق من صندوق الوارد أو مجلد Spam في بريدك."
-          );
-          $("forgot-email").value = "";
-        })
-        .catch(function(err) { showError("forgot-error", mapError(err.code)); })
-        .finally(function() { setLoading("forgot-submit-btn", false); });
-    })
-    .catch(function() {
-      // Network error → send directly without check
-      auth.sendPasswordResetEmail(email)
-        .then(function() {
-          showSuccess("forgot-success",
-            "✅ إذا كان البريد مسجلاً، سيصلك رابط إعادة التعيين.\n" +
-            "تحقق من صندوق الوارد أو مجلد Spam في بريدك."
-          );
-          $("forgot-email").value = "";
-        })
-        .catch(function(err) { showError("forgot-error", mapError(err.code)); })
-        .finally(function() { setLoading("forgot-submit-btn", false); });
-    });
+    // Send reset email directly — Firebase rejects automatically if email not found
+    auth.sendPasswordResetEmail(email)
+      .then(function() {
+        showSuccess("forgot-success",
+          "✅ إذا كان بريدك الإلكتروني مسجلاً في المنصة، فقد تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك.\n" +
+          "📩 يرجى التحقق من صندوق الوارد (Inbox) أو مجلد البريد غير المرغوب (Spam)."
+        );
+        $("forgot-email").value = "";
+      })
+      .catch(function(err) {
+        showSuccess("forgot-success",
+          "✅ إذا كان بريدك الإلكتروني مسجلاً في المنصة، فقد تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك.\n" +
+          "📩 يرجى التحقق من صندوق الوارد (Inbox) أو مجلد البريد غير المرغوب (Spam)."
+        );
+        $("forgot-email").value = "";
+      })
+      .finally(function() { setLoading("forgot-submit-btn", false); });
   };
 
   // ── LOGOUT ────────────────────────────────────────────────────────────────
