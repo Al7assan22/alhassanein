@@ -69,6 +69,7 @@
     <div class="nav-scroll-wrap" id="nav-scroll-wrap">
     <button class="nav-btn active" onclick="showScreen('home')" id="nav-home"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>الرئيسية</span></button>
     <button class="nav-btn" onclick="showScreen('listen')" id="nav-listen"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a8 8 0 0 1 16 0"/><rect x="3" y="14" width="5" height="6" rx="1.5"/><rect x="16" y="14" width="5" height="6" rx="1.5"/></svg><span>استمع للقرآن</span></button>
+    <button class="nav-btn" onclick="showScreen('radio')" id="nav-radio"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16v9H4z"/><path d="M4 11l13-5"/><circle cx="8" cy="15.5" r="2"/><path d="M14 14h4M14 17h4"/></svg><span>إذاعة القرآن الكريم</span></button>
     <button class="nav-btn" onclick="showScreen('original')" id="nav-original"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5z"/></svg><span>مصحف المدينة</span></button>
     <button class="nav-btn" onclick="showScreen('quran')" id="nav-quran"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg><span>قراءة بالنص</span></button>
     <button class="nav-btn" onclick="showScreen('memorize')" id="nav-memorize"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v1H7a2 2 0 0 0-2 2v3a7 7 0 1 0 14 0V8a2 2 0 0 0-2-2h-2V5a3 3 0 0 0-3-3z"/><path d="M9 18v2M15 18v2"/></svg><span>تحفيظ القرآن</span></button>
@@ -232,6 +233,11 @@
         <div class="icon">🧠</div>
         <h3>تحفيظ القرآن</h3>
         <p>تكرار، اختبار، وتتبّع التقدم</p>
+      </div>
+      <div class="quick-card highlight" onclick="showScreen('radio')">
+        <div class="icon">📻</div>
+        <h3>إذاعة القرآن من القاهرة</h3>
+        <p>بث مباشر • تلاوات وأحاديث وبرامج دينية</p>
       </div>
     </div>
 
@@ -677,6 +683,66 @@
       </div>
     </div>
   </div>
+
+    <!-- RADIO SCREEN -->
+    <div class="screen" id="screen-radio">
+      <div class="radio-hero">
+        <div class="radio-hero-badge">📻 بث مباشر</div>
+        <h1>إذاعة القرآن الكريم</h1>
+        <p>بثٌّ مباشر على مدار الساعة من القاهرة ومكة المكرمة والمدينة المنورة.</p>
+      </div>
+
+      <div class="radio-player-card">
+        <div class="radio-cover">
+          <div class="radio-cover-inner" id="radio-cover-inner">
+            <div class="radio-cover-emoji" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 11h16v9H4z"/>
+                <path d="M4 11l13-5"/>
+                <circle cx="8" cy="15.5" r="2.2"/>
+                <path d="M14 14h4M14 17h4"/>
+                <path d="M17 6v3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="radio-live-badge" id="radio-live-badge">
+            <span class="radio-live-dot"></span>
+            <span id="radio-live-text">غير متصل</span>
+          </div>
+        </div>
+
+        <div class="radio-station-info">
+          <div class="radio-station-name" id="radio-station-name">إذاعة القرآن الكريم</div>
+          <div class="radio-station-sub" id="radio-station-sub">القاهرة — جمهورية مصر العربية</div>
+        </div>
+
+        <div class="radio-controls">
+          <button class="radio-btn-main" id="radio-toggle-btn" type="button" onclick="toggleRadio()" aria-label="تشغيل/إيقاف">
+            <span id="radio-toggle-icon">▶</span>
+          </button>
+        </div>
+
+        <div class="radio-volume-row">
+          <button class="radio-vol-btn" type="button" onclick="toggleRadioMute()" id="radio-mute-btn" aria-label="كتم">🔊</button>
+          <input type="range" id="radio-volume" min="0" max="100" value="80" class="radio-volume-slider"
+            oninput="setRadioVolume(this.value)" aria-label="مستوى الصوت">
+          <span class="radio-vol-value" id="radio-vol-value">80%</span>
+        </div>
+
+        <div class="radio-status" id="radio-status">جاهز للتشغيل — اضغط زر التشغيل للبدء</div>
+      </div>
+
+      <div class="radio-stations">
+        <div class="memo-section-title">📡 اختر المحطة</div>
+        <div class="radio-station-grid" id="radio-station-grid"></div>
+      </div>
+
+      <audio id="radio-audio" preload="none" crossorigin="anonymous"
+        controlsList="nodownload noplaybackrate noremoteplayback"
+        disableremoteplayback
+        style="display:none !important;width:0;height:0;position:absolute;left:-9999px;"
+        oncontextmenu="return false;"></audio>
+    </div>
 
 </main>
 </div>
@@ -1453,17 +1519,18 @@ body.player-active .fab-chat-window {
 
 @media (max-width: 768px) {
   .fab-ai-container { bottom: 14px !important; left: 12px !important; right: auto !important; top: auto !important; align-items: flex-end; gap: 10px; }
-  .fab-ai-btn { width: 58px; height: 58px; }
-  .fab-icon svg { width: 26px; height: 26px; }
+  .fab-ai-btn { width: 50px; height: 50px; }
+  .fab-icon svg { width: 22px; height: 22px; }
   .fab-chat-window { width: calc(100vw - 24px); max-width: 340px; max-height: 70vh; }
-  body.player-active .fab-ai-container { display: none !important; }
+  body.player-active .fab-ai-container { bottom: 148px !important; }
   body.player-active .fab-chat-window { max-height: calc(100vh - 220px); }
 }
 
 @media (max-width: 480px) {
-  .fab-ai-btn { width: 58px; height: 58px; }
-  .fab-icon svg { width: 26px; height: 26px; }
+  .fab-ai-btn { width: 46px; height: 46px; }
+  .fab-icon svg { width: 20px; height: 20px; }
   .fab-chat-window { width: calc(100vw - 20px); }
+  body.player-active .fab-ai-container { bottom: 148px !important; }
 }
 
 /* Extra safety: use :has() for browsers that support it */
@@ -1532,6 +1599,119 @@ async function fabAskAI(question) {
   }
   msgs.scrollTop = msgs.scrollHeight;
 }
+</script>
+
+<!-- ============== RADIO (Quran Cairo) ============== -->
+<script>
+(function(){
+  // Cairo Quran Radio + related Egyptian Quran streams (HTTPS via radio.mp3quran.net)
+  var STATIONS = [
+    { id: 'cairo', name: 'إذاعة القرآن الكريم — القاهرة', sub: 'البث الرسمي • جمهورية مصر العربية', url: 'https://stream.radiojar.com/8s5u5tpdtwzuv' },
+    { id: 'makkah', name: 'مكة المكرمة', sub: 'البث المباشر من الحرم المكي', url: 'https://Qurango.net/radio/salma' },
+    { id: 'madinah', name: 'المدينة المنورة', sub: 'البث المباشر من الحرم النبوي', url: 'https://Qurango.net/radio/abdulrahman_alsudaes' }
+  ];
+
+  var state = { idx: 0, playing: false, lastVol: 80, muted: false };
+  function $(id){ return document.getElementById(id); }
+
+  function renderStations(){
+    var grid = $('radio-station-grid'); if(!grid) return;
+    grid.innerHTML = STATIONS.map(function(s,i){
+      return '<button type="button" class="radio-station-card '+(i===state.idx?'active':'')+'" data-i="'+i+'">' +
+               '<div class="rsc-icon">📻</div>' +
+               '<div class="rsc-text"><div class="rsc-name">'+s.name+'</div><div class="rsc-sub">'+s.sub+'</div></div>' +
+             '</button>';
+    }).join('');
+    Array.prototype.forEach.call(grid.querySelectorAll('.radio-station-card'), function(btn){
+      btn.addEventListener('click', function(){ selectStation(parseInt(btn.dataset.i,10)); });
+    });
+  }
+
+  function updateUI(){
+    var s = STATIONS[state.idx];
+    var name = $('radio-station-name'); if(name) name.textContent = s.name;
+    var sub  = $('radio-station-sub');  if(sub)  sub.textContent  = s.sub;
+    var icon = $('radio-toggle-icon');  if(icon) icon.textContent = state.playing ? '⏸' : '▶';
+    var live = $('radio-live-text');    if(live) live.textContent = state.playing ? 'مباشر الآن' : 'غير متصل';
+    var badge= $('radio-live-badge');   if(badge) badge.classList.toggle('on', state.playing);
+    var cover= $('radio-cover-inner');  if(cover) cover.classList.toggle('spinning', state.playing);
+    var btn  = $('radio-toggle-btn');   if(btn)  btn.classList.toggle('playing', state.playing);
+    Array.prototype.forEach.call(document.querySelectorAll('.radio-station-card'), function(b){
+      b.classList.toggle('active', parseInt(b.dataset.i,10) === state.idx);
+    });
+  }
+
+  function setStatus(t){ var el=$('radio-status'); if(el) el.textContent = t; }
+
+  window.selectStation = function(i){
+    if(i===state.idx) return;
+    state.idx = i;
+    var a = $('radio-audio'); if(!a) return;
+    var wasPlaying = state.playing;
+    a.pause();
+    a.src = STATIONS[i].url;
+    if(wasPlaying){
+      setStatus('جارٍ الاتصال بـ ' + STATIONS[i].name + '...');
+      a.play().catch(function(e){ state.playing=false; updateUI(); setStatus('تعذّر تشغيل المحطة. حاول مرة أخرى.'); });
+    } else {
+      setStatus('جاهز — اضغط زر التشغيل');
+    }
+    updateUI();
+  };
+
+  window.toggleRadio = function(){
+    var a = $('radio-audio'); if(!a) return;
+    if(state.playing){
+      a.pause();
+      state.playing = false;
+      setStatus('تم الإيقاف');
+      updateUI();
+      return;
+    }
+    if(!a.src) a.src = STATIONS[state.idx].url;
+    setStatus('جارٍ الاتصال بالبث المباشر...');
+    var p = a.play();
+    if(p && p.then){
+      p.then(function(){ state.playing=true; setStatus('🔴 مباشر — ' + STATIONS[state.idx].name); updateUI(); })
+       .catch(function(){ state.playing=false; setStatus('تعذّر تشغيل البث. تحقق من الاتصال بالإنترنت ثم حاول مجدداً.'); updateUI(); });
+    } else {
+      state.playing = true; setStatus('🔴 مباشر'); updateUI();
+    }
+  };
+
+  window.setRadioVolume = function(v){
+    var a = $('radio-audio'); if(!a) return;
+    var n = Math.max(0, Math.min(100, parseInt(v,10)||0));
+    a.volume = n/100;
+    state.lastVol = n || state.lastVol;
+    state.muted = (n===0);
+    var lab = $('radio-vol-value'); if(lab) lab.textContent = n + '%';
+    var mb = $('radio-mute-btn');   if(mb)  mb.textContent = n===0 ? '🔇' : (n<40 ? '🔉' : '🔊');
+  };
+
+  window.toggleRadioMute = function(){
+    var sl = $('radio-volume'); if(!sl) return;
+    if(state.muted){ sl.value = state.lastVol||80; setRadioVolume(sl.value); }
+    else { state.lastVol = parseInt(sl.value,10)||80; sl.value = 0; setRadioVolume(0); }
+  };
+
+  function init(){
+    if(document.getElementById('radio-station-grid') && !document.getElementById('radio-station-grid').dataset.ready){
+      document.getElementById('radio-station-grid').dataset.ready = '1';
+      renderStations();
+      var a = $('radio-audio');
+      if(a){
+        a.addEventListener('playing', function(){ state.playing=true; setStatus('🔴 مباشر — ' + STATIONS[state.idx].name); updateUI(); });
+        a.addEventListener('pause',   function(){ state.playing=false; updateUI(); });
+        a.addEventListener('error',   function(){ state.playing=false; setStatus('حدث خطأ في البث. جرّب محطة أخرى.'); updateUI(); });
+        a.addEventListener('waiting', function(){ setStatus('جارٍ التحميل...'); });
+        a.volume = 0.8;
+      }
+      updateUI();
+    }
+  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
+})();
 </script>
 
 </body>
