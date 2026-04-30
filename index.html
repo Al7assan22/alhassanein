@@ -1519,18 +1519,23 @@ body.player-active .fab-chat-window {
 
 @media (max-width: 768px) {
   .fab-ai-container { bottom: 14px !important; left: 12px !important; right: auto !important; top: auto !important; align-items: flex-end; gap: 10px; }
-  .fab-ai-btn { width: 50px; height: 50px; }
-  .fab-icon svg { width: 22px; height: 22px; }
+  .fab-ai-btn { width: 58px; height: 58px; }
+  .fab-icon svg { width: 26px; height: 26px; }
   .fab-chat-window { width: calc(100vw - 24px); max-width: 340px; max-height: 70vh; }
   body.player-active .fab-ai-container { bottom: 148px !important; }
   body.player-active .fab-chat-window { max-height: calc(100vh - 220px); }
 }
 
 @media (max-width: 480px) {
-  .fab-ai-btn { width: 46px; height: 46px; }
-  .fab-icon svg { width: 20px; height: 20px; }
+  .fab-ai-btn { width: 58px; height: 58px; }
+  .fab-icon svg { width: 26px; height: 26px; }
   .fab-chat-window { width: calc(100vw - 20px); }
   body.player-active .fab-ai-container { bottom: 148px !important; }
+}
+
+/* Hide FAB when audio player is active on mobile */
+@media (max-width: 768px) {
+  .fab-ai-container.player-playing { opacity: 0 !important; pointer-events: none !important; transform: scale(0.7); transition: opacity 0.25s ease, transform 0.25s ease; }
 }
 
 /* Extra safety: use :has() for browsers that support it */
