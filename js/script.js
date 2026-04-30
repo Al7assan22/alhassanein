@@ -633,16 +633,13 @@ function changeReciterBar(val) {
 }
 
 function showPlayer(surahNum, verseNum) {
-  // على الموبايل: أغلق نافذة الـ FAB لو كانت مفتوحة
-  if (window.innerWidth <= 768 && typeof fabChatOpen !== 'undefined' && fabChatOpen) {
-    const btn = document.getElementById('fab-ai-btn');
-    const win = document.getElementById('fab-chat-window');
-    fabChatOpen = false;
-    if (btn) btn.classList.remove('is-open');
-    if (win) win.classList.remove('is-open');
-  }
   document.getElementById('audio-player').classList.add('visible');
   document.body.classList.add('player-active');
+  // Hide FAB on mobile while player is active
+  if (window.innerWidth <= 768) {
+    const fabContainer = document.getElementById('fab-ai-container');
+    if (fabContainer) fabContainer.classList.add('player-playing');
+  }
   const surahName = (allSurahs.find(s => s.number === surahNum)?.name_arabic) || state.currentSurah?.name_arabic || `سورة ${surahNum}`;
   document.getElementById('audio-surah-name').textContent = surahName;
   document.getElementById('audio-verse-info').textContent = `الآية ${toArabicDigits(verseNum)} — ${RECITER_NAMES[state.currentReciter] || state.currentReciter}`;
@@ -658,6 +655,9 @@ function closePlayer() {
   state.nowPlaying = { surah: null, verse: null, context: null };
   document.getElementById('audio-player').classList.remove('visible');
   document.body.classList.remove('player-active');
+  // Restore FAB visibility
+  const fabContainer = document.getElementById('fab-ai-container');
+  if (fabContainer) fabContainer.classList.remove('player-playing');
   document.querySelectorAll('.mushaf-ayah.playing, .verse-block.playing').forEach(el => el.classList.remove('playing'));
 }
 
@@ -2724,6 +2724,11 @@ function listenPlaySurah(surahNum){
   audio.playbackRate = parseFloat(document.querySelector('.audio-controls .speed-select')?.value || '1');
   document.getElementById('audio-player').classList.add('visible');
   document.body.classList.add('player-active');
+  // Hide FAB on mobile while player is active
+  if (window.innerWidth <= 768) {
+    const fabContainer = document.getElementById('fab-ai-container');
+    if (fabContainer) fabContainer.classList.add('player-playing');
+  }
   document.getElementById('audio-surah-name').textContent = surah.name_arabic || surah.name;
   document.getElementById('audio-verse-info').textContent = `سورة كاملة — ${RECITER_NAMES[LISTEN_STATE.reciter]||''}`;
   audio.play().then(()=>{
