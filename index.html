@@ -1136,15 +1136,15 @@
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 12px;
   pointer-events: none;
 }
 
 /* Floating Button */
 .fab-ai-btn {
-  width: 58px;
-  height: 58px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: #B6923A;
   border: none;
@@ -1180,8 +1180,8 @@
 
 .fab-icon {
   position: absolute;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   color: #fff;
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
@@ -1518,7 +1518,7 @@
 }
 
 @media (max-width: 768px) {
-  .fab-ai-container { bottom: 14px !important; left: 12px !important; right: auto !important; top: auto !important; align-items: flex-end; gap: 10px; }
+  .fab-ai-container { bottom: 14px !important; left: 12px !important; right: auto !important; top: auto !important; align-items: flex-start; gap: 10px; }
   .fab-ai-btn { width: 48px; height: 48px; }
   .fab-icon svg { width: 22px; height: 22px; }
   .fab-chat-window { width: calc(100vw - 24px); max-width: 340px; max-height: 70vh; }
