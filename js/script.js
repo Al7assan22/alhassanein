@@ -635,11 +635,9 @@ function changeReciterBar(val) {
 function showPlayer(surahNum, verseNum) {
   document.getElementById('audio-player').classList.add('visible');
   document.body.classList.add('player-active');
-  // Hide FAB on mobile while player is active
-  if (window.innerWidth <= 768) {
-    const fabContainer = document.getElementById('fab-ai-container');
-    if (fabContainer) fabContainer.classList.add('player-playing');
-  }
+  // Smoothly hide FAB while player is active (all screen sizes)
+  const fabBtn = document.getElementById('fab-ai-btn');
+  if (fabBtn) fabBtn.classList.add('fab-hidden');
   const surahName = (allSurahs.find(s => s.number === surahNum)?.name_arabic) || state.currentSurah?.name_arabic || `سورة ${surahNum}`;
   document.getElementById('audio-surah-name').textContent = surahName;
   document.getElementById('audio-verse-info').textContent = `الآية ${toArabicDigits(verseNum)} — ${RECITER_NAMES[state.currentReciter] || state.currentReciter}`;
@@ -655,9 +653,9 @@ function closePlayer() {
   state.nowPlaying = { surah: null, verse: null, context: null };
   document.getElementById('audio-player').classList.remove('visible');
   document.body.classList.remove('player-active');
-  // Restore FAB visibility
-  const fabContainer = document.getElementById('fab-ai-container');
-  if (fabContainer) fabContainer.classList.remove('player-playing');
+  // Smoothly restore FAB visibility
+  const fabBtn = document.getElementById('fab-ai-btn');
+  if (fabBtn) fabBtn.classList.remove('fab-hidden');
   document.querySelectorAll('.mushaf-ayah.playing, .verse-block.playing').forEach(el => el.classList.remove('playing'));
 }
 
@@ -2724,11 +2722,9 @@ function listenPlaySurah(surahNum){
   audio.playbackRate = parseFloat(document.querySelector('.audio-controls .speed-select')?.value || '1');
   document.getElementById('audio-player').classList.add('visible');
   document.body.classList.add('player-active');
-  // Hide FAB on mobile while player is active
-  if (window.innerWidth <= 768) {
-    const fabContainer = document.getElementById('fab-ai-container');
-    if (fabContainer) fabContainer.classList.add('player-playing');
-  }
+  // Smoothly hide FAB while player is active (all screen sizes)
+  const fabBtnListen = document.getElementById('fab-ai-btn');
+  if (fabBtnListen) fabBtnListen.classList.add('fab-hidden');
   document.getElementById('audio-surah-name').textContent = surah.name_arabic || surah.name;
   document.getElementById('audio-verse-info').textContent = `سورة كاملة — ${RECITER_NAMES[LISTEN_STATE.reciter]||''}`;
   audio.play().then(()=>{
