@@ -633,6 +633,14 @@ function changeReciterBar(val) {
 }
 
 function showPlayer(surahNum, verseNum) {
+  // على الموبايل: أغلق نافذة الـ FAB لو كانت مفتوحة
+  if (window.innerWidth <= 768 && typeof fabChatOpen !== 'undefined' && fabChatOpen) {
+    const btn = document.getElementById('fab-ai-btn');
+    const win = document.getElementById('fab-chat-window');
+    fabChatOpen = false;
+    if (btn) btn.classList.remove('is-open');
+    if (win) win.classList.remove('is-open');
+  }
   document.getElementById('audio-player').classList.add('visible');
   document.body.classList.add('player-active');
   const surahName = (allSurahs.find(s => s.number === surahNum)?.name_arabic) || state.currentSurah?.name_arabic || `سورة ${surahNum}`;
