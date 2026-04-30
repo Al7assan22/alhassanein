@@ -1519,18 +1519,33 @@ body.player-active .fab-chat-window {
 
 @media (max-width: 768px) {
   .fab-ai-container { bottom: 14px !important; left: 12px !important; right: auto !important; top: auto !important; align-items: flex-end; gap: 10px; }
-  .fab-ai-btn { width: 50px; height: 50px; }
-  .fab-icon svg { width: 22px; height: 22px; }
+  .fab-ai-btn { width: 44px; height: 44px; }
+  .fab-icon { width: 20px; height: 20px; }
+  .fab-icon svg { width: 18px; height: 18px; }
   .fab-chat-window { width: calc(100vw - 24px); max-width: 340px; max-height: 70vh; }
   body.player-active .fab-ai-container { bottom: 148px !important; }
   body.player-active .fab-chat-window { max-height: calc(100vh - 220px); }
+
+  /* Hide FAB while Quran radio is playing on mobile */
+  body.radio-active .fab-ai-container {
+    opacity: 0;
+    transform: scale(0.6) translateY(20px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
 }
 
 @media (max-width: 480px) {
-  .fab-ai-btn { width: 46px; height: 46px; }
-  .fab-icon svg { width: 20px; height: 20px; }
+  .fab-ai-btn { width: 42px; height: 42px; }
+  .fab-icon { width: 18px; height: 18px; }
+  .fab-icon svg { width: 16px; height: 16px; }
   .fab-chat-window { width: calc(100vw - 20px); }
   body.player-active .fab-ai-container { bottom: 148px !important; }
+}
+
+/* Smooth transition back when FAB returns */
+.fab-ai-container {
+  transition: opacity 0.3s ease, transform 0.3s ease, bottom 0.3s ease;
 }
 
 /* Extra safety: use :has() for browsers that support it */
@@ -1636,6 +1651,7 @@ async function fabAskAI(question) {
     var badge= $('radio-live-badge');   if(badge) badge.classList.toggle('on', state.playing);
     var cover= $('radio-cover-inner');  if(cover) cover.classList.toggle('spinning', state.playing);
     var btn  = $('radio-toggle-btn');   if(btn)  btn.classList.toggle('playing', state.playing);
+    document.body.classList.toggle('radio-active', !!state.playing);
     Array.prototype.forEach.call(document.querySelectorAll('.radio-station-card'), function(b){
       b.classList.toggle('active', parseInt(b.dataset.i,10) === state.idx);
     });
