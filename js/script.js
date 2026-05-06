@@ -2645,56 +2645,102 @@ const LISTEN_STATE = {
   playing: false,
 };
 
-// ===== MINI PLAYER داخل شاشة الاستماع =====
+// ===== LISTEN PLAYER BAR — نفس شكل audio-player بالظبط =====
 function _listenShowMiniPlayer(surah) {
   let bar = document.getElementById('listen-mini-player');
   if (!bar) {
     bar = document.createElement('div');
     bar.id = 'listen-mini-player';
-    bar.style.cssText = `
-      position:sticky; bottom:0; left:0; right:0; z-index:99;
-      background:var(--card-bg,#1a1a2e);
-      border-top:1px solid var(--border,#2a2a4a);
-      padding:10px 16px 12px;
-      display:flex; flex-direction:column; gap:6px;
-    `;
+    // نفس classes بتاعت audio-player عشان يأخد نفس الـ CSS
+    bar.className = 'audio-player listen-player-bar';
     bar.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;direction:rtl;">
-        <button id="lmp-play" onclick="_listenToggle()" style="
-          width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;
-          background:var(--primary,#c9a84c);color:#000;font-size:18px;
-          display:flex;align-items:center;justify-content:center;flex-shrink:0;">▶</button>
-        <div style="flex:1;min-width:0;">
-          <div id="lmp-name" style="font-size:13px;font-weight:700;color:var(--text-primary,#fff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl;"></div>
-          <div id="lmp-reciter" style="font-size:11px;color:var(--text-muted,#888);direction:rtl;"></div>
+      <!-- Info (يمين) -->
+      <div class="audio-info">
+        <div class="audio-cover">🎧</div>
+        <div class="audio-text">
+          <div class="audio-surah" id="lmp-name">—</div>
+          <div class="audio-verse" id="lmp-reciter">—</div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted,#888);">
-          <span id="lmp-cur">0:00</span>
-          <span>/</span>
-          <span id="lmp-dur">0:00</span>
+        <!-- Reciter select — نفس audio-player بس بيتحكم في listen audio -->
+        <div class="audio-reciter-wrap">
+          <select class="audio-reciter-select" id="lmp-reciter-select"
+            onchange="listenSetReciter(this.value)" title="اختر القارئ">
+            <option value="minshawi">المنشاوي</option>
+            <option value="abdulbasit">عبد الباسط</option>
+            <option value="husary">الحصري</option>
+            <option value="alafasy">العفاسي</option>
+            <option value="dossari">الدوسري</option>
+            <option value="qatami">القطامي</option>
+            <option value="sudais">السديس</option>
+          </select>
         </div>
-        <button onclick="_listenStop()" style="background:none;border:none;cursor:pointer;color:var(--text-muted,#888);font-size:18px;padding:4px;">✕</button>
+        <button class="a-btn close-btn" onclick="_listenStop()" title="إغلاق">✕</button>
       </div>
-      <input id="lmp-seek" type="range" min="0" max="100" value="0"
-        oninput="_listenSeek(this.value)"
-        style="width:100%;accent-color:var(--primary,#c9a84c);height:3px;cursor:pointer;">
+
+      <!-- Progress bar (وسط) -->
+      <div class="audio-progress">
+        <span class="a-time" id="lmp-cur">0:00</span>
+        <input type="range" id="lmp-seek" min="0" max="100" value="0" step="0.1"
+          class="audio-seek" oninput="_listenSeek(this.value)">
+        <span class="a-time" id="lmp-dur">0:00</span>
+      </div>
+
+      <!-- Controls (شمال) -->
+      <div class="audio-controls">
+        <!-- السورة السابقة -->
+        <button class="a-btn" onclick="_listenSkipPrev()" title="السورة السابقة">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><polygon points="19,20 9,12 19,4"/><rect x="5" y="4" width="3" height="16" rx="1"/></svg>
+        </button>
+        <!-- Play/Pause -->
+        <button class="play-btn" id="lmp-play" onclick="_listenToggle()" title="تشغيل / إيقاف">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+        </button>
+        <!-- السورة التالية -->
+        <button class="a-btn" onclick="_listenSkipNext()" title="السورة التالية">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><polygon points="5,20 15,12 5,4"/><rect x="16" y="4" width="3" height="16" rx="1"/></svg>
+        </button>
+        <!-- Volume -->
+        <div class="volume-wrap">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <input type="range" class="volume-slider" id="lmp-volume" min="0" max="100" value="100"
+            oninput="_listenVolume(this.value)" title="مستوى الصوت">
+        </div>
+      </div>
     `;
-    const screen = document.getElementById('screen-listen');
-    if (screen) screen.appendChild(bar);
+    // أضفه لـ body مش لشاشة الاستماع عشان يبقى fixed زي audio-player
+    document.body.appendChild(bar);
   }
-  document.getElementById('lmp-name').textContent = surah.name_arabic || surah.name;
-  document.getElementById('lmp-reciter').textContent = RECITER_NAMES[LISTEN_STATE.reciter] || LISTEN_STATE.reciter;
-  bar.style.display = 'flex';
+  // تحديث البيانات
+  const nameEl = document.getElementById('lmp-name');
+  const recEl  = document.getElementById('lmp-reciter');
+  const selEl  = document.getElementById('lmp-reciter-select');
+  if (nameEl) nameEl.textContent = surah.name_arabic || surah.name;
+  if (recEl)  recEl.textContent  = 'سورة كاملة — ' + (RECITER_NAMES[LISTEN_STATE.reciter] || LISTEN_STATE.reciter);
+  if (selEl)  selEl.value        = LISTEN_STATE.reciter;
+  // إظهار الشريط — نفس آلية audio-player
+  bar.classList.add('visible');
+}
+
+function _listenHideBar() {
+  const bar = document.getElementById('listen-mini-player');
+  if (bar) bar.classList.remove('visible');
 }
 
 function _listenUpdateBar() {
   const audio = getListenAudio();
-  const playBtn = document.getElementById('lmp-play');
-  const seek = document.getElementById('lmp-seek');
-  const cur = document.getElementById('lmp-cur');
-  const dur = document.getElementById('lmp-dur');
   const fmt = t => { const m=Math.floor(t/60),s=Math.floor(t%60); return m+':'+(s<10?'0':'')+s; };
-  if (playBtn) playBtn.textContent = audio.paused ? '▶' : '⏸';
+
+  // Play/Pause icon — نفس طريقة audio-player
+  const playBtn = document.getElementById('lmp-play');
+  if (playBtn) {
+    playBtn.innerHTML = audio.paused
+      ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>'
+      : '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>';
+  }
+  // Seek + time
+  const seek = document.getElementById('lmp-seek');
+  const cur  = document.getElementById('lmp-cur');
+  const dur  = document.getElementById('lmp-dur');
   if (seek && audio.duration) seek.value = (audio.currentTime / audio.duration) * 100;
   if (cur) cur.textContent = fmt(audio.currentTime || 0);
   if (dur && audio.duration) dur.textContent = fmt(audio.duration);
@@ -2715,14 +2761,30 @@ function _listenStop() {
   audio.src = '';
   LISTEN_STATE.currentSurah = null;
   LISTEN_STATE.playing = false;
-  const bar = document.getElementById('listen-mini-player');
-  if (bar) bar.style.display = 'none';
+  _listenHideBar();
   renderListenSurahs();
 }
 
 function _listenSeek(val) {
   const audio = getListenAudio();
   if (audio.duration) audio.currentTime = (val / 100) * audio.duration;
+}
+
+function _listenVolume(val) {
+  const audio = getListenAudio();
+  audio.volume = val / 100;
+}
+
+function _listenSkipNext() {
+  const cur = LISTEN_STATE.currentSurah || 1;
+  const next = Math.min(cur + 1, 114);
+  if (next !== cur) listenPlaySurah(next);
+}
+
+function _listenSkipPrev() {
+  const cur = LISTEN_STATE.currentSurah || 1;
+  const prev = Math.max(cur - 1, 1);
+  if (prev !== cur) listenPlaySurah(prev);
 }
 
 // ===== RECITER =====
@@ -2750,9 +2812,11 @@ function listenSetReciter(val) {
       if (savedTime > 0) audio.currentTime = savedTime;
       if (wasPlaying) audio.play().catch(() => {});
     }, { once: true });
-    // تحديث اسم القارئ في الباربار
+    // تحديث اسم القارئ والـ select في الشريط
     const recEl = document.getElementById('lmp-reciter');
-    if (recEl) recEl.textContent = RECITER_NAMES[val] || val;
+    if (recEl) recEl.textContent = 'سورة كاملة — ' + (RECITER_NAMES[val] || val);
+    const selEl = document.getElementById('lmp-reciter-select');
+    if (selEl) selEl.value = val;
   }
 }
 
