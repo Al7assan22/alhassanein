@@ -5948,3 +5948,55 @@ audio#radio-audio{ display:none !important; visibility:hidden !important; width:
   .radio-btn-main{ width:72px; height:72px; font-size:26px; }
   .radio-station-grid{ grid-template-columns: 1fr; }
 }
+
+/* ===== LISTEN PLAYER BAR — نفس audio-player بس backend مستقل ===== */
+/* بيرث كل CSS من .audio-player — بس بنضيف تمييز بسيط */
+#listen-mini-player.audio-player {
+  /* تدرج زرقاء-ذهبية بدل الأسود عشان يتميز عن شريط القراءة */
+  background: rgba(8, 22, 44, 0.97) !important;
+  border-top: 1px solid rgba(100, 160, 255, 0.18) !important;
+  box-shadow: 0 -10px 40px -10px rgba(0, 60, 150, 0.35) !important;
+}
+[data-theme="light"] #listen-mini-player.audio-player {
+  background: rgba(238, 245, 255, 0.97) !important;
+  border-top: 1px solid rgba(60, 120, 220, 0.22) !important;
+  box-shadow: 0 -10px 40px -10px rgba(30, 80, 180, 0.18) !important;
+}
+/* أيقونة الغلاف — لون أزرق بدل الذهبي */
+#listen-mini-player .audio-cover {
+  background: linear-gradient(160deg, #1a5fb4 0%, #0d3575 100%) !important;
+  box-shadow: 0 4px 10px -3px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+}
+/* زر Play — أزرق بدل الذهبي */
+#listen-mini-player .play-btn {
+  background: linear-gradient(160deg, #2a7de1 0%, #1453a8 100%) !important;
+  box-shadow: 0 6px 18px -6px rgba(42,125,225,0.55), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+  color: #fff !important;
+  padding: 0 0 0 2px !important;
+}
+#listen-mini-player .play-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 22px -6px rgba(42,125,225,0.7), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+}
+/* Seek slider — أزرق */
+#listen-mini-player .audio-seek::-webkit-slider-thumb { background: #7eb8f7; border-color: #2a7de1; }
+#listen-mini-player .audio-seek::-moz-range-thumb     { background: #7eb8f7; border-color: #2a7de1; }
+#listen-mini-player .audio-seek::-moz-range-progress  { background: #2a7de1; }
+/* Volume slider — أزرق */
+#listen-mini-player .volume-slider::-webkit-slider-thumb { background: #7eb8f7; border-color: #2a7de1; }
+#listen-mini-player .volume-slider::-moz-range-thumb     { background: #7eb8f7; border-color: #2a7de1; }
+/* اسم السورة — أبيض مشرق */
+#listen-mini-player .audio-surah { color: #eef3ff !important; }
+#listen-mini-player .audio-verse { color: #90b4e8 !important; }
+/* لما الشريطين يكونوا شغالين مع بعض — listen فوق reading */
+#audio-player.visible ~ #listen-mini-player.visible,
+body:has(#audio-player.visible) #listen-mini-player.visible {
+  bottom: 90px;
+}
+@media (max-width: 720px) {
+  body:has(#audio-player.visible) #listen-mini-player.visible {
+    bottom: 138px;
+  }
+  body:has(#listen-mini-player.visible) { padding-bottom: 220px !important; }
+}
+body:has(#listen-mini-player.visible) { padding-bottom: 88px; }
