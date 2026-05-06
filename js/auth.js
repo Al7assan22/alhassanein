@@ -376,10 +376,15 @@
       USER_KEYS.forEach(function(key) {
         try { localStorage.removeItem(key); } catch(e) {}
       });
-      // Reset memorize data in memory
+      // Reset memorize data in memory — clears MEMO to defaults, sets stats to 0
       if (typeof window.__reloadMEMO__ === 'function') window.__reloadMEMO__();
       // Reset script.js state
       if (typeof window.refreshStatsUI === 'function') window.refreshStatsUI();
+      // Explicitly zero out stat cards
+      ['memo-stat-verses','memo-stat-surahs','memo-stat-sessions','stat-memorized-home'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = '0';
+      });
       updateUserUI(null);
       showToast("تم تسجيل الخروج. إلى اللقاء! 👋", "info");
     });
@@ -505,35 +510,55 @@
 
   // Load user data from Firebase into localStorage, then refresh UI
   function loadUserData(uid) {
-    if (!db) return;
+    if (!db) {
+      // No DB — still mark logged in and sync stats from localStorage
+      window.__userLoggedIn__ = true;
+      if (typeof window.__reloadMEMO__ === 'function') window.__reloadMEMO__();
+      if (typeof window.refreshStatsUI === 'function') window.refreshStatsUI();
+      return;
+    }
     db.ref('users/' + uid).once('value').then(function(snap) {
       var data = snap.val();
-      if (!data) return;
-      USER_KEYS.forEach(function(key) {
-        if (data[key] !== undefined) {
-          try { localStorage.setItem(key, typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key])); }
-          catch(e) {}
-        }
-      });
-      // Refresh stats UI if script.js has loaded
+      if (data) {
+        USER_KEYS.forEach(function(key) {
+          if (data[key] !== undefined) {
+            try {
+              // Firebase can store as string or object — always write string to localStorage
+              var val = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
+              localStorage.setItem(key, val);
+            } catch(e) {}
+          }
+        });
+      }
+      // Mark user as logged in BEFORE reloading stats
+      window.__userLoggedIn__ = true;
+      // Reload memorize data into MEMO object from the freshly written localStorage
+      if (typeof window.__reloadMEMO__ === 'function') window.__reloadMEMO__();
+      // Refresh all stats UI
       if (typeof window.refreshStatsUI === 'function') window.refreshStatsUI();
-    }).catch(function() {});
+    }).catch(function() {
+      // Even if Firebase fails, the user is still authenticated
+      window.__userLoggedIn__ = true;
+      if (typeof window.__reloadMEMO__ === 'function') window.__reloadMEMO__();
+      if (typeof window.refreshStatsUI === 'function') window.refreshStatsUI();
+    });
   }
 
-  // Save user data from localStorage to Firebase (called by script.js patches)
+  // Save user data from localStorage to Firebase (called by memorize.js / script.js)
   window.saveUserDataToFirebase = function(key, value) {
     var user = auth.currentUser;
     if (!db || !user) return;
     var update = {};
-    update[key] = value;
+    // Always store as JSON string — consistent with localStorage and loadUserData
+    update[key] = (typeof value === 'string') ? value : JSON.stringify(value);
     db.ref('users/' + user.uid).update(update).catch(function() {});
   };
 
   // When auth state changes, sync user data
   auth.onAuthStateChanged(function(user) {
-    window.__userLoggedIn__ = !!user;
     updateUserUI(user);
     if (user) {
+      window.__userLoggedIn__ = true;
       loadUserData(user.uid);
       // Auto-migrate: save email to users node + emails index (covers old users)
       if (db && user.email) {
