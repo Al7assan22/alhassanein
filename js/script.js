@@ -628,34 +628,8 @@ function changeReciterBar(val) {
   document.querySelectorAll('.reciter-chip').forEach(el => {
     el.classList.toggle('active', el.dataset.r === val);
   });
-
-  const screen = _activeScreen();
-
-  if (screen === 'screen-listen') {
-    // In listen screen: let listenSetReciter handle it (keeps position, same surah)
-    if (typeof listenSetReciter === 'function') listenSetReciter(val);
-    else changeReciter(val);
-    return;
-  }
-
-  // In reading/quran screen: restart surah from verse 1 with new reciter
-  state.currentReciter = val;
-  const wasPlaying = state.playing;
-  audioEl.pause();
-  audioEl.removeAttribute('src');
-  audioEl.load();
-  state.playing = false;
-  updatePlayBtn();
+  changeReciter(val);
   showToast('القارئ: ' + (RECITER_NAMES[val] || val));
-
-  if (wasPlaying && state.currentSurah) {
-    // Restart surah from verse 1
-    state.currentVerseIdx = 0;
-    const firstVerse = state.currentVerses[0];
-    if (firstVerse) {
-      playVerseAudio(state.currentSurah.number, firstVerse.numberInSurah, state.nowPlaying.context || 'surah');
-    }
-  }
 }
 
 function showPlayer(surahNum, verseNum) {
@@ -1409,18 +1383,8 @@ function mshfToggleBookmark(){
 }
 
 function mshfGoLastPage(){
-  // Go to the last saved bookmark (pin) if any, else fall back to last visited page
-  const bms = mshfState.bookmarks;
-  if (bms && bms.length > 0) {
-    // Use the most recently added bookmark (last in array)
-    const targetPage = bms[bms.length - 1];
-    mshfLoadPage(targetPage);
-    showToast('ذهاب إلى الصفحة المحفوظة 🔖');
-  } else {
-    const saved = parseInt(localStorage.getItem('mshf_page')||'1',10);
-    mshfLoadPage(saved);
-    showToast('لا يوجد حفظ محدد، فتح آخر صفحة زرتها');
-  }
+  const saved = parseInt(localStorage.getItem('mshf_page')||'1',10);
+  mshfLoadPage(saved);
   mshfClosePanel();
 }
 
@@ -3383,8 +3347,7 @@ renderVerses = function(verses, surah) {
     const v = verses[i];
     if (!v) return;
     const cleanText = block.querySelector('.verse-arabic')?.textContent?.replace(/[٠-٩]+/g, '').trim().substring(0, 100) || '';
-    const surahName = surah?.name_arabic || surah?.name || state.currentSurah?.name_arabic || state.currentSurah?.name || '';
-    const ref = `${surahName} · ${toArabicDigits(v.numberInSurah)}`;
+    const ref = `${surah.name_arabic} · ${v.numberInSurah}`;
 
     // Wire action button
     const actionBtns = block.querySelectorAll('.v-action-btn-top, .v-action-btn');
