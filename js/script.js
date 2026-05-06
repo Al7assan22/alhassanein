@@ -385,6 +385,13 @@ async function playVerseAudio(surahNum, verseNum, context) {
 }
 
 function togglePlay() {
+  // لو شاشة الاستماع → الـ bar الرئيسي غير موجود، mini player بيتحكم فيه
+  // لو شاشة القراءة → الـ audioEl الخاص بالقراءة
+  const screen = _activeScreen ? _activeScreen() : '';
+  if (screen === 'screen-listen') {
+    _listenToggle && _listenToggle();
+    return;
+  }
   if (!state.nowPlaying.surah && !state.currentSurah) return;
   if (state.playing) { audioEl.pause(); state.playing = false; }
   else {
@@ -404,18 +411,17 @@ function updatePlayBtn() {
     ? '<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"currentColor\"><rect x=\"5\" y=\"3\" width=\"4\" height=\"18\" rx=\"1\"/><rect x=\"15\" y=\"3\" width=\"4\" height=\"18\" rx=\"1\"/></svg>'
     : '<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"currentColor\"><polygon points=\"5,3 19,12 5,21\"/></svg>';
   // vplay-btn buttons are NOT updated here — they only change when the user clicks them directly
-  // Update lc-play buttons in surah list (listen screen)
+  // Update lc-play buttons in surah list (listen screen) — يستخدم LISTEN_STATE المستقل
   document.querySelectorAll('.lc-btn.lc-play').forEach(b => {
     const sn = parseInt(b.getAttribute('data-surah') || '0');
     const isThis = sn === (LISTEN_STATE?.currentSurah || 0);
-    const playing = isThis && state.playing;
+    const playing = isThis && (LISTEN_STATE?.playing || false);
     b.innerHTML = playing
       ? '<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"currentColor\"><rect x=\"5\" y=\"3\" width=\"4\" height=\"18\" rx=\"1\"/><rect x=\"15\" y=\"3\" width=\"4\" height=\"18\" rx=\"1\"/></svg>'
       : '<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"currentColor\"><polygon points=\"5,3 19,12 5,21\"/></svg>';
     b.classList.toggle('playing', playing);
-    // Also highlight the whole card
     const card = b.closest('.listen-card');
-    if(card) card.classList.toggle('playing-card', playing);
+    if (card) card.classList.toggle('playing-card', playing);
   });
 }
 
@@ -621,15 +627,30 @@ async function barSkipPrev() {
 }
 
 function changeReciterBar(val) {
-  // Update both contexts
+  // شاشة الاستماع — تتعامل معاها listenSetReciter المستقلة
+  const screen = _activeScreen();
+  if (screen === 'screen-listen') {
+    listenSetReciter(val);
+    return;
+  }
+
+  // شاشة القراءة — تغيير قارئ الآيات فقط (لا علاقة بالاستماع)
   state.currentReciter = val;
-  if (typeof LISTEN_STATE !== 'undefined') LISTEN_STATE.reciter = val;
-  // Sync listen screen reciter chips if visible
-  document.querySelectorAll('.reciter-chip').forEach(el => {
-    el.classList.toggle('active', el.dataset.r === val);
-  });
-  changeReciter(val);
+  const wasPlaying = state.playing;
+  audioEl.pause();
+  audioEl.removeAttribute('src');
+  audioEl.load();
+  state.playing = false;
+  updatePlayBtn();
   showToast('القارئ: ' + (RECITER_NAMES[val] || val));
+
+  if (wasPlaying && state.currentSurah) {
+    state.currentVerseIdx = 0;
+    const firstVerse = state.currentVerses[0];
+    if (firstVerse) {
+      playVerseAudio(state.currentSurah.number, firstVerse.numberInSurah, state.nowPlaying.context || 'surah');
+    }
+  }
 }
 
 function showPlayer(surahNum, verseNum) {
@@ -1383,8 +1404,18 @@ function mshfToggleBookmark(){
 }
 
 function mshfGoLastPage(){
-  const saved = parseInt(localStorage.getItem('mshf_page')||'1',10);
-  mshfLoadPage(saved);
+  // Go to the last saved bookmark (pin) if any, else fall back to last visited page
+  const bms = mshfState.bookmarks;
+  if (bms && bms.length > 0) {
+    // Use the most recently added bookmark (last in array)
+    const targetPage = bms[bms.length - 1];
+    mshfLoadPage(targetPage);
+    showToast('ذهاب إلى الصفحة المحفوظة 🔖');
+  } else {
+    const saved = parseInt(localStorage.getItem('mshf_page')||'1',10);
+    mshfLoadPage(saved);
+    showToast('لا يوجد حفظ محدد، فتح آخر صفحة زرتها');
+  }
   mshfClosePanel();
 }
 
@@ -2581,65 +2612,161 @@ function mshfRenderDual(){
 })();
 
 
-// ===== LISTEN SCREEN =====
-const LISTEN_STATE = { reciter: 'minshawi', query: '', currentSurah: null };
+// ===== LISTEN SCREEN — مستقل تماماً عن شاشة القراءة =====
+// Audio element خاص بالاستماع فقط — لا يشارك audioEl الخاص بالقراءة
+let _listenAudio = null;
+function getListenAudio() {
+  if (!_listenAudio) {
+    _listenAudio = new Audio();
+    _listenAudio.preload = 'none';
+    _listenAudio.onended = function() {
+      LISTEN_STATE.playing = false;
+      renderListenSurahs();
+      _listenUpdateBar();
+    };
+    _listenAudio.ontimeupdate = function() { _listenUpdateBar(); };
+    _listenAudio.onpause = function() {
+      LISTEN_STATE.playing = false;
+      renderListenSurahs();
+    };
+    _listenAudio.onplay = function() {
+      LISTEN_STATE.playing = true;
+      renderListenSurahs();
+    };
+  }
+  return _listenAudio;
+}
 
-function listenSetReciter(val){
-  LISTEN_STATE.reciter = val;
-  // sync with main player
-  state.currentReciter = val;
-  const sel = document.getElementById('reciter-select');
-  if(sel) { try { sel.value = val; } catch(e){} }
+// State مستقل للاستماع — لا يلمس state الرئيسي
+const LISTEN_STATE = {
+  reciter: 'minshawi',
+  query: '',
+  currentSurah: null,
+  playing: false,
+};
+
+// ===== MINI PLAYER داخل شاشة الاستماع =====
+function _listenShowMiniPlayer(surah) {
+  let bar = document.getElementById('listen-mini-player');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'listen-mini-player';
+    bar.style.cssText = `
+      position:sticky; bottom:0; left:0; right:0; z-index:99;
+      background:var(--card-bg,#1a1a2e);
+      border-top:1px solid var(--border,#2a2a4a);
+      padding:10px 16px 12px;
+      display:flex; flex-direction:column; gap:6px;
+    `;
+    bar.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;direction:rtl;">
+        <button id="lmp-play" onclick="_listenToggle()" style="
+          width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;
+          background:var(--primary,#c9a84c);color:#000;font-size:18px;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0;">▶</button>
+        <div style="flex:1;min-width:0;">
+          <div id="lmp-name" style="font-size:13px;font-weight:700;color:var(--text-primary,#fff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl;"></div>
+          <div id="lmp-reciter" style="font-size:11px;color:var(--text-muted,#888);direction:rtl;"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted,#888);">
+          <span id="lmp-cur">0:00</span>
+          <span>/</span>
+          <span id="lmp-dur">0:00</span>
+        </div>
+        <button onclick="_listenStop()" style="background:none;border:none;cursor:pointer;color:var(--text-muted,#888);font-size:18px;padding:4px;">✕</button>
+      </div>
+      <input id="lmp-seek" type="range" min="0" max="100" value="0"
+        oninput="_listenSeek(this.value)"
+        style="width:100%;accent-color:var(--primary,#c9a84c);height:3px;cursor:pointer;">
+    `;
+    const screen = document.getElementById('screen-listen');
+    if (screen) screen.appendChild(bar);
+  }
+  document.getElementById('lmp-name').textContent = surah.name_arabic || surah.name;
+  document.getElementById('lmp-reciter').textContent = RECITER_NAMES[LISTEN_STATE.reciter] || LISTEN_STATE.reciter;
+  bar.style.display = 'flex';
+}
+
+function _listenUpdateBar() {
+  const audio = getListenAudio();
+  const playBtn = document.getElementById('lmp-play');
+  const seek = document.getElementById('lmp-seek');
+  const cur = document.getElementById('lmp-cur');
+  const dur = document.getElementById('lmp-dur');
+  const fmt = t => { const m=Math.floor(t/60),s=Math.floor(t%60); return m+':'+(s<10?'0':'')+s; };
+  if (playBtn) playBtn.textContent = audio.paused ? '▶' : '⏸';
+  if (seek && audio.duration) seek.value = (audio.currentTime / audio.duration) * 100;
+  if (cur) cur.textContent = fmt(audio.currentTime || 0);
+  if (dur && audio.duration) dur.textContent = fmt(audio.duration);
+}
+
+function _listenToggle() {
+  const audio = getListenAudio();
+  if (audio.paused) {
+    audio.play().catch(() => showToast('تعذر التشغيل'));
+  } else {
+    audio.pause();
+  }
+}
+
+function _listenStop() {
+  const audio = getListenAudio();
+  audio.pause();
+  audio.src = '';
+  LISTEN_STATE.currentSurah = null;
+  LISTEN_STATE.playing = false;
+  const bar = document.getElementById('listen-mini-player');
+  if (bar) bar.style.display = 'none';
   renderListenSurahs();
-  showToast('القارئ: ' + (RECITER_NAMES[val]||val));
+}
 
-  // If a surah is currently playing, switch to same surah with new reciter from same position
-  const audio = document.getElementById('audio-el');
-  const playingSurah = LISTEN_STATE.currentSurah;
-  if(playingSurah && audio && audio.src && state.playing) {
+function _listenSeek(val) {
+  const audio = getListenAudio();
+  if (audio.duration) audio.currentTime = (val / 100) * audio.duration;
+}
+
+// ===== RECITER =====
+function listenSetReciter(val) {
+  const audio = getListenAudio();
+  LISTEN_STATE.reciter = val;
+  showToast('القارئ: ' + (RECITER_NAMES[val] || val));
+
+  // تحديث الـ chips
+  document.querySelectorAll('.reciter-chip').forEach(el => {
+    el.classList.toggle('active', el.dataset.r === val);
+  });
+
+  // لو في سورة شغالة → غيّر القارئ واحتفظ بالوقت
+  if (LISTEN_STATE.currentSurah) {
     const savedTime = audio.currentTime;
     const wasPlaying = !audio.paused;
-    const surah = (allSurahs||[]).find(s=>s.number===playingSurah);
-    const newUrl = getFullSurahUrl(val, playingSurah);
+    const url = getFullSurahUrl(val, LISTEN_STATE.currentSurah);
     audio.pause();
-    audio.src = newUrl;
+    audio.src = url;
     audio.load();
-    audio.addEventListener('canplay', function onCanPlay(){
-      audio.removeEventListener('canplay', onCanPlay);
-      audio.currentTime = savedTime;
-      if(wasPlaying){
-        audio.play().then(()=>{
-          state.playing = true;
-          if(typeof updatePlayBtn==='function') updatePlayBtn();
-        }).catch(()=>{ showToast('تعذر التشغيل، حاول قارئاً آخر'); });
-      }
+    // لما يكون جاهز للتشغيل روح للوقت المحفوظ
+    audio.addEventListener('canplay', function onReady() {
+      audio.removeEventListener('canplay', onReady);
+      if (savedTime > 0) audio.currentTime = savedTime;
+      if (wasPlaying) audio.play().catch(() => {});
     }, { once: true });
-    // Update player info
-    if(surah){
-      document.getElementById('audio-verse-info').textContent = `سورة كاملة — ${RECITER_NAMES[val]||val}`;
-    }
+    // تحديث اسم القارئ في الباربار
+    const recEl = document.getElementById('lmp-reciter');
+    if (recEl) recEl.textContent = RECITER_NAMES[val] || val;
   }
 }
 
-function listenFilter(q){
-  LISTEN_STATE.query = (q||'').trim();
+// ===== FILTER =====
+function listenFilter(q) {
+  LISTEN_STATE.query = (q || '').trim();
   renderListenSurahs();
 }
 
-async function ensureSurahsLoaded(){
-  if(!allSurahs || !allSurahs.length){
-    try{
-      const surahs = await fetchSurahs();
-      allSurahs = surahs;
-      state.surahs = surahs;
-    }catch(e){}
-  }
-}
-
-async function renderListenScreen(){
-  // Build reciter chips
+// ===== INIT SCREEN =====
+async function renderListenScreen() {
+  // بناء chips القراء — مرة واحدة بس
   const chipsWrap = document.getElementById('listen-reciters');
-  if(chipsWrap && !chipsWrap.dataset.built){
+  if (chipsWrap && !chipsWrap.dataset.built) {
     const order = ['minshawi','abdulbasit','husary','dossari','alafasy','qatami','sudais'];
     chipsWrap.innerHTML = order.map(k => `
       <button class="reciter-chip ${k===LISTEN_STATE.reciter?'active':''}" data-r="${k}" onclick="listenSetReciter('${k}')">
@@ -2652,29 +2779,47 @@ async function renderListenScreen(){
     `).join('');
     chipsWrap.dataset.built = '1';
   }
-  await ensureSurahsLoaded();
+  // تحميل السور لو مش موجودة
+  if (!allSurahs || !allSurahs.length) {
+    const grid = document.getElementById('listen-grid');
+    if (grid) grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div><h3>جارٍ التحميل...</h3></div>';
+    try {
+      const surahs = await fetchSurahs();
+      if (surahs && surahs.length) {
+        allSurahs = surahs;
+        window.allSurahs = surahs;
+        if (window.state) window.state.surahs = surahs;
+      }
+    } catch(e) {}
+  }
   renderListenSurahs();
 }
 
-function renderListenSurahs(){
-  // active chip
-  document.querySelectorAll('.reciter-chip').forEach(el=>{
+// ===== RENDER SURAH CARDS =====
+function renderListenSurahs() {
+  document.querySelectorAll('.reciter-chip').forEach(el => {
     el.classList.toggle('active', el.dataset.r === LISTEN_STATE.reciter);
   });
   const grid = document.getElementById('listen-grid');
-  if(!grid) return;
-  if(!allSurahs || !allSurahs.length){
+  if (!grid) return;
+  if (!allSurahs || !allSurahs.length) {
     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div><h3>جارٍ التحميل...</h3></div>';
     return;
   }
   const q = LISTEN_STATE.query;
-  const list = allSurahs.filter(s => !q || (s.name_arabic||s.name||'').includes(q) || String(s.number).includes(q) || (s.englishName||'').toLowerCase().includes(q.toLowerCase()));
-  if(!list.length){
+  const list = allSurahs.filter(s =>
+    !q ||
+    (s.name_arabic||s.name||'').includes(q) ||
+    String(s.number).includes(q) ||
+    (s.englishName||'').toLowerCase().includes(q.toLowerCase())
+  );
+  if (!list.length) {
     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><h3>لا توجد نتائج</h3></div>';
     return;
   }
   grid.innerHTML = list.map(s => {
-    const isPlaying = (LISTEN_STATE.currentSurah === s.number) && state.playing;
+    const isPlaying = (LISTEN_STATE.currentSurah === s.number) && LISTEN_STATE.playing;
+    const isLoaded  = (LISTEN_STATE.currentSurah === s.number) && !LISTEN_STATE.playing;
     const playIcon = isPlaying
       ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>'
       : '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>';
@@ -2686,83 +2831,99 @@ function renderListenSurahs(){
           <div class="lc-meta">${s.revelationType==='Meccan'?'مكية':'مدنية'} • ${toArabicDigits(s.numberOfAyahs)} آية</div>
         </div>
         <div class="lc-actions">
-          <button class="lc-btn lc-play${isPlaying?' playing':''}" data-surah="${s.number}" onclick="listenPlaySurah(${s.number})" title="استماع / إيقاف">${playIcon}</button>
-          <button class="lc-btn lc-dl" onclick="listenDownloadSurah(${s.number},'${(s.englishName||'surah').replace(/'/g,'')}')" title="تحميل"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M7 11l5 5 5-5"/><rect x="3" y="18" width="18" height="3" rx="1.5" fill="currentColor" stroke="none"/></svg></button>
+          <button class="lc-btn lc-play${isPlaying?' playing':''}" data-surah="${s.number}"
+            onclick="listenPlaySurah(${s.number})" title="استماع / إيقاف">${playIcon}</button>
+          <button class="lc-btn lc-dl"
+            onclick="listenDownloadSurah(${s.number},'${(s.englishName||'surah').replace(/'/g,'')}')"
+            title="تحميل">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v13M7 11l5 5 5-5"/><rect x="3" y="18" width="18" height="3" rx="1.5" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
         </div>
       </div>
     `;
   }).join('');
 }
 
-function listenPlaySurah(surahNum){
-  const surah = (allSurahs||[]).find(s=>s.number===surahNum);
-  if(!surah) return;
+// ===== PLAY / PAUSE — مستقل 100% عن شاشة القراءة =====
+function listenPlaySurah(surahNum) {
+  const surah = (allSurahs||[]).find(s => s.number === surahNum);
+  if (!surah) return;
+  const audio = getListenAudio();
 
-  const audio = document.getElementById('audio-el');
-
-  // === TOGGLE: if same surah playing → pause/resume ===
-  if(LISTEN_STATE.currentSurah === surahNum && audio.src && !audio.paused){
-    audio.pause();
-    state.playing = false;
-    if(typeof updatePlayBtn==='function') updatePlayBtn();
+  // نفس السورة → toggle pause/play
+  if (LISTEN_STATE.currentSurah === surahNum) {
+    if (!audio.paused) {
+      audio.pause();
+    } else {
+      audio.play().catch(() => showToast('تعذر التشغيل، جرب قارئاً آخر'));
+    }
     return;
   }
-  if(LISTEN_STATE.currentSurah === surahNum && audio.src && audio.paused){
-    audio.play().then(()=>{ state.playing=true; if(typeof updatePlayBtn==='function') updatePlayBtn(); }).catch(()=>{});
-    return;
-  }
 
-  // === NEW SURAH: start playing ===
+  // سورة جديدة → حمّل وشغّل
   LISTEN_STATE.currentSurah = surahNum;
+  LISTEN_STATE.playing = false;
+
+  // أظهر mini player فوراً (بدون تأخير)
+  _listenShowMiniPlayer(surah);
+
   const url = getFullSurahUrl(LISTEN_STATE.reciter, surahNum);
-  state.currentSurah = surah;
-  state.currentVerseIdx = 0;
-  state.nowPlaying = { surah: surahNum, verse: 1, context: 'listen-full' };
+
+  // reset سريع بدون load() ثقيل
+  audio.pause();
   audio.src = url;
-  audio.playbackRate = parseFloat(document.querySelector('.audio-controls .speed-select')?.value || '1');
-  document.getElementById('audio-player').classList.add('visible');
-  document.body.classList.add('player-active');
-  // Smoothly hide FAB while player is active (all screen sizes)
-  const fabBtnListen = document.getElementById('fab-ai-btn');
-  if (fabBtnListen) fabBtnListen.classList.add('fab-hidden');
-  document.getElementById('audio-surah-name').textContent = surah.name_arabic || surah.name;
-  document.getElementById('audio-verse-info').textContent = `سورة كاملة — ${RECITER_NAMES[LISTEN_STATE.reciter]||''}`;
-  audio.play().then(()=>{
-    state.playing = true;
-    if(typeof updatePlayBtn==='function') updatePlayBtn();
-  }).catch(()=>{
-    showToast('تعذر التشغيل، حاول قارئاً آخر');
-  });
+  audio.preload = 'auto';
+
+  // تحديث الكارد فوراً (loading state)
+  renderListenSurahs();
+
+  // شغّل فوراً — المتصفح يبدأ يحمّل ويشغّل في نفس الوقت
+  audio.play()
+    .then(() => {
+      LISTEN_STATE.playing = true;
+      renderListenSurahs();
+    })
+    .catch(() => {
+      // بعض المتصفحات محتاجة canplay أول
+      audio.addEventListener('canplay', function onReady() {
+        audio.removeEventListener('canplay', onReady);
+        audio.play()
+          .then(() => { LISTEN_STATE.playing = true; renderListenSurahs(); })
+          .catch(() => showToast('تعذر التشغيل، جرب قارئاً آخر'));
+      }, { once: true });
+    });
 }
 
-// === DIRECT DOWNLOAD (no page navigation) ===
-async function listenDownloadSurah(surahNum, surahEnName){
+// ===== DOWNLOAD =====
+async function listenDownloadSurah(surahNum, surahEnName) {
   const url = getFullSurahUrl(LISTEN_STATE.reciter, surahNum);
   const fname = `${String(surahNum).padStart(3,'0')}-${(surahEnName||'surah').replace(/\s+/g,'_')}-${LISTEN_STATE.reciter}.mp3`;
   showToast('⏳ جارٍ التحميل...');
   try {
     const res = await fetch(url);
-    if(!res.ok) throw new Error('fetch failed');
+    if (!res.ok) throw new Error('fetch failed');
     const blob = await res.blob();
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = fname;
     document.body.appendChild(a);
     a.click();
-    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 3000);
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 3000);
     showToast('✅ تم التحميل بنجاح!');
   } catch(e) {
     showToast('❌ تعذّر التحميل، تحقق من الاتصال');
   }
 }
 
-// Hook into showScreen to lazy-init listen screen
+// ===== Hook showScreen — lazy init =====
 (function(){
   const _showScreen = window.showScreen;
-  if(typeof _showScreen === 'function'){
-    window.showScreen = function(name){
+  if (typeof _showScreen === 'function') {
+    window.showScreen = function(name) {
       _showScreen(name);
-      if(name === 'listen'){ renderListenScreen(); }
+      if (name === 'listen') { renderListenScreen(); }
     };
   }
 })();
@@ -3347,7 +3508,8 @@ renderVerses = function(verses, surah) {
     const v = verses[i];
     if (!v) return;
     const cleanText = block.querySelector('.verse-arabic')?.textContent?.replace(/[٠-٩]+/g, '').trim().substring(0, 100) || '';
-    const ref = `${surah.name_arabic} · ${v.numberInSurah}`;
+    const surahName = surah?.name_arabic || surah?.name || state.currentSurah?.name_arabic || state.currentSurah?.name || '';
+    const ref = `${surahName} · ${toArabicDigits(v.numberInSurah)}`;
 
     // Wire action button
     const actionBtns = block.querySelectorAll('.v-action-btn-top, .v-action-btn');
