@@ -29,10 +29,11 @@
     }
   }
   function saveMemo() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(MEMO)); } catch (e) {}
-    // Sync to Firebase if user is logged in
+    const json = JSON.stringify(MEMO);
+    try { localStorage.setItem(STORAGE_KEY, json); } catch (e) {}
+    // Sync to Firebase as a JSON string (consistent with loadUserData in auth.js)
     if (typeof window.saveUserDataToFirebase === 'function') {
-      window.saveUserDataToFirebase(STORAGE_KEY, MEMO);
+      window.saveUserDataToFirebase(STORAGE_KEY, json);
     }
     syncToGlobalStats();
   }
@@ -51,8 +52,12 @@
       } else {
         MEMO = JSON.parse(JSON.stringify(defaultMemo));
       }
-    } catch(e) {}
+    } catch(e) {
+      MEMO = JSON.parse(JSON.stringify(defaultMemo));
+    }
     syncToGlobalStats();
+    // Re-render progress if memorize screen is open
+    if (typeof renderProgress === 'function') try { renderProgress(); } catch(e) {}
   };
 
   // Called by refreshStatsUI to update memorize stats in home screen
@@ -72,10 +77,9 @@
   }
   function syncToGlobalStats() {
     try {
-      // Use a more reliable login check: firebase currentUser OR a flag set by auth.js
-      const isLoggedIn = (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser)
-        || (window.__userLoggedIn__ === true)
-        || (localStorage.getItem('quran_memorize_v1') !== null && MEMO.sessionsCount > 0);
+      // Reliable login check — أساسي هو __userLoggedIn__ اللي بتحدده auth.js
+      const isLoggedIn = (window.__userLoggedIn__ === true)
+        || (typeof firebase !== 'undefined' && firebase.auth && !!firebase.auth().currentUser);
       if (typeof state !== 'undefined' && state && state.stats) {
         state.stats.memorized = totalMemorized();
         state.stats.sessionsCount = MEMO.sessionsCount || 0;
